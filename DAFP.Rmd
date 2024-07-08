@@ -1,0 +1,237 @@
+---
+title: "Risk Premia of the Italian Stock market"
+author: "Alessia Piacitelli"
+date: "2023-12-18"
+output: pdf_document
+header-includes:
+    - \usepackage{caption}
+---
+\captionsetup[table]{labelformat=empty}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, warning = F, message = F)
+```
+
+```{r, results='asis'}
+
+library(tidyverse)
+library(ggplot2)
+library(stargazer)
+library(readxl)
+library(plotly)
+library(forecast)
+library(tseries)
+
+dat = read.csv('datDAFP.csv')
+```
+
+
+
+
+**Abstract**
+
+
+**Introduction**
+
+Monetary policy is a phenomenon that garners considerable attention due to its influence on a broad spectrum of interest rates. These rates, in turn, impact the equity stock market, shareholders, and consequently, the wealth of households and individuals. Understanding how to monitor interest rate movements and extracting valuable information from their fluctuations is crucial. Moreover, the stock market serves as a useful ex-ante proxy for the economy, exhibiting high responsiveness to the cost of borrowing money, i.e., the interest rate.
+
+When central banks set interest rates, they must consider numerous factors, including:
+
+The impact of their decisions on expectations.
+The effect of changes on the yield curve, which illustrates the relationship between the maturity (expiration horizon) of bonds (securities created by the government to borrow money) and the yield (return) these securities will pay.
+The eventual influence on the return of the stock market.
+This consideration is vital, as by influencing seemingly disparate factors, monetary policy significantly shapes macroeconomic predictions and decisions.
+
+**Literature review**
+
+The relationship between interest rates and the equity market has been extensively studied from various perspectives. In my project, I endeavored to comprehend and partially replicate the study conducted by G. Faria and F. Verona on the yield curve and the stock market. The authors employed a frequency domain method, specifically signal processing, with applications to time series in finance (Faria and Verona, 2020).
+
+Building on earlier research, Fama and French (1989) established a positive correlation between returns on the equity market and the slope of the yield curve. However, when considering the Italian stock market similar relationships may exhibit different characteristics. Hence, it is crucial to adapt and extend these findings to the specific nuances of the Italian stock market.
+
+By delving into the intricacies of Faria and Verona's methodology, I attempted to partially shed light on how yield spreads could enhance our understanding of equity market. This endeavor contributes to the broader discourse on the dynamics of financial markets, offering insights that can inform investment strategies and monetary policy decisions.
+
+
+**Methodology and Data**
+
+
+To conduct this analysis, I collected data on four key indicators: the yield on medium-term bonds (2 years) CTZ in Italy, data on long-term bonds (10 years) BTPs, the return on the Milan Borsa Italiana (Italian Stock Market, FTSE MIB), and the Euro Interbank Offered rate for 3 months (EUR003M Index), serving as a proxy for the risk-free rate. All data were sourced from the Bloomberg terminal.
+
+Following the data gathering process, spanning from January 2014 to September 2023, and subsequent cleaning, I proceeded to calculate additional variables for my analysis. The initial variable of interest was the risk premium. Typically, individuals engage with the stock market with the expectation of earning returns above the "risk-free rate." The risk-free rate represents the reward an investor receives when investing in risk-free financial instruments such as Treasury bills. Venturing into the stock market involves inherent risks, which are generally compensated by the risk premium—the difference between the return on the stock market and the risk-free rate (in this case: EUR003M Index):
+
+$$\text{Risk Premia} = \text{FTSE MIB} - \text{Risk free rate}$$
+
+Subsequently, I computed the term spread (TMS) using the formula:
+
+$$TMS =\text{BTP10} - \text{3-months rate}$$
+
+The term spread is a valuable metric for monitoring the yield curve. When the term spread is negative, the yield curve starts to invert, indicating that people's expectations about the distant future are more pessimistic than what they anticipate in the near future. In essence, the return on bonds with longer maturities becomes less than that on shorter maturities.
+
+Following this, I extended my analysis by calculating term spreads within specific bond categories—CTZ (2 years) and BTPs (10 years)—across different time windows: 2-4 months, 4-8 months, 8-16 months, and 16-32 months. This approach provides insights into the volatility of the expectations regarding economic stability over various time horizons.
+
+```{r, results='asis'}
+dat %>% select(-c(X, X.1)) %>% stargazer(type = 'latex', header = F)
+```
+
+
+**Methodology**
+
+The summary statistics and correlations are presented in the panel for both the equity premium and the assumed predictors. The predictors encompass the original time series of the term spread (TMS) and variations in frequencies that capture oscillations of the term spread within different intervals: less than 16 months, between 16 and 128 months, and greater than 128 months.
+
+The dataset comprises 117 monthly observations, spanning from January 2014 to September 2023. These statistics provide a comprehensive overview of the key variables, shedding light on their central tendencies and relationships over the specified time period.
+
+```{r, results='asis'}
+dat %>% select(-c(X, X.1, DATE, spread_2_4_lt, spread_4_8_lt, spread_8_16_lt,
+                  spread_16_32_lt, yield_lt))%>%
+  cor() %>% stargazer(type = 'latex', header = F, font.size = 'tiny')
+
+dat %>% select(-c(X, X.1, DATE, spread_2_4_mt, spread_4_8_mt, spread_8_16_mt,
+                  spread_16_32_mt, yield_mt)) %>%
+  cor() %>% stargazer(type = 'latex', header = F, font.size = 'tiny')
+
+
+```
+
+
+Following this, I generated plots of the term spreads to scrutinize their characteristics. It's noteworthy that the term spread consistently oscillates between positive values over the last decade, indicating that the yield on the 10-year bond has consistently surpassed that of the 3-month risk-free rate. This suggests an overall positive outlook on future expectations. Notably, the lowest points occurred in 2020 during the COVID-19 period, with the absolute lowest observed in the summer of 2023 when Italy faced potential recession threats.
+
+Upon examining the interactive plots (accessible via the link (file:///Users/macbook/Desktop/Data%20Analysis/DA%20Final%20Project/DAFPplots.html#1) or in the Brightspace submission) and comparing spreads for the same months between medium- and long-term bonds, I observed a predominantly positive difference from 2014 to 2018 and post-COVID (2021). However, during the COVID period, this difference increasingly turned negative, and notably in 2023, signaling a shift in expectations towards the future—a decrease in confidence. Interestingly, this trend wasn't evident when comparing the 16-32 spread for both sets of bonds. Despite following a more or less similar path, the 2-4 month spreads were notably different. This discrepancy can be attributed to the general confidence in the distant future in the absence of a recession.
+
+This exercise facilitated a deeper understanding of the data nature and provided a clear overview of the fact that the movements in the variable are more or less the same with different
+power of oscillation.
+
+Initially, in reviewing the paper, I opted to test two approaches aligning with the project's purpose and my level of preparation. Firstly, I observed that the correlation between the risk premium and my variables was generally weak (with the exception of returns). Additionally, a linear regression analysis yielded no statistically significant results:
+```{r, results='asis'}
+
+md_tms = lm(rpremia ~ tms, data = dat) 
+md_m24 = lm(rpremia ~ tms + spread_2_4_mt, data = dat) 
+md_m48 =lm(rpremia ~ tms + spread_2_4_mt  +  spread_4_8_mt, data = dat) 
+md_m816 =lm(rpremia ~ tms + spread_2_4_mt +  spread_4_8_mt +  spread_8_16_mt,
+            data = dat) 
+md_m1632 =lm(rpremia ~ tms + spread_2_4_mt + spread_4_8_mt  +  spread_8_16_mt +
+               spread_16_32_mt,
+             data = dat) 
+md_l24 =lm(rpremia ~ tms + spread_2_4_mt + spread_4_8_mt + spread_8_16_mt +
+             spread_16_32_mt + spread_2_4_lt,
+           data = dat) 
+md_l48 =lm(rpremia ~ tms + spread_2_4_mt +  spread_4_8_mt + spread_8_16_mt +
+             spread_16_32_mt + spread_2_4_lt + spread_4_8_lt,
+           data = dat)
+md_l816 =lm(rpremia ~ tms + spread_2_4_mt + spread_4_8_mt + spread_8_16_mt +
+              spread_16_32_mt + spread_2_4_lt + spread_4_8_lt + spread_8_16_lt,
+            data = dat) 
+md_l1632 =lm(rpremia ~ tms + spread_2_4_mt + spread_4_8_mt + spread_8_16_mt +
+               spread_16_32_mt + spread_2_4_lt + spread_4_8_lt + spread_8_16_lt
+             + spread_16_32_lt,
+             data = dat)
+
+stargazer(md_tms, md_m24, md_m816,md_m1632,md_l24,md_l48,md_l816, type = 'latex',
+          dep.var.labels = c('Risk Premium'),
+          covariate.labels = c('TMS', 'Medium TMS 2-4', 'Medium TMS 4-8', 
+                               'Medium TMS 8-16', 'Medium TMS 16-32',
+                               'Long TMS 2-4', 'Long TMS 4-8', 'Long TMS 8-16'),
+          title = 'TMS comparison',
+          header = F,
+          model.numbers = F,
+          omit.stat = c('rsq', 'ser', 'f'),
+          style = 'ajps')
+```
+
+\newpage
+
+However, after numerous attempts at working with the dataset, I discerned that an approach tailored for time series analysis would be more fitting for my case. Consequently, I employed the ARIMA (AutoRegressive Integrated Moving Average) model.
+
+To commence, I plotted the risk premia data over time, as it represents the focal point of my study and estimation efforts. This visual representation serves as an initial exploration into the patterns and trends inherent in the risk premia dataset.
+
+
+```{r, results='asis'}
+dat$rpremia %>% plot.ts(main = 'Risk Premia: plot')
+```
+
+Next, I examined whether my data exhibited stationarity, signifying a constant mean, variance, and covariance over time. I conducted this analysis using the AutoCorrelation Function (ACF):
+
+```{r, results='asis'}
+Acf(dat$rpremia, main = "Risk premium: Acf test")
+Pacf(dat$rpremia, main = "Risk premium: Pacf test")
+
+```
+
+A notable correlation exists within the risk premium, and this hypothesis is substantiated by the Augmented Dickey-Fuller Test, which yields a p-value less than 0.05. Consequently, the data is deemed stationary.
+
+With the confirmed stationarity of the data, I employed the auto.arima function to determine the most fitting ARIMA model:
+
+```{r, results='asis'}
+auto.arima(dat$rpremia)
+```
+
+
+\newpage
+The results indicate that the best fit for the ARIMA model is (0, 0, 0), where:
+
+**p**
+p represents the AutoRegressive component, conducting a regression of the current value on its past values. It signifies how many lagged values are included in the model.
+**d**
+d is the Integrated component, involving differencing the time series to achieve stationarity (i.e., the order of differencing needed).
+**q**
+q stands for the Moving Average component, modeling the relationship between the current value and a white noise term, which is a weighted sum of past white noise terms.
+Consequently, the ARIMA model, in this case, is not designed for predicting future trends but rather for capturing the inherent structure within the stationary time series.
+
+
+```{r, results='asis'}
+forecast(dat$rpremia) %>% plot
+Arima(dat$rpremia, order = c(0, 0, 0)) %>% forecast(h = 12) %>% plot()
+```
+
+
+**Conclusions and Limitations**
+
+The project encountered multiple limitations as it progressed. Firstly, there was a inherent risk that the findings might not align with expectations, especially given the decision to conduct the exercise with Italian data. Notably, the Italian risk-free rate is not as stable as the US T-bill, and recent considerations by Moody's to potentially downgrade Italy's credit rating adds to the complexity. This underscores the need for caution when using the Italian yield as a reference point, and adjustments may be warranted.
+
+Secondly, being a member of the EU, Italy does not autonomously set its own interest rates; they are determined by the ECB. This indirect intervention could potentially alter the relationship studied, introducing complexities that may not be universally applicable to a specific case like Italy's.
+
+Thirdly, Borsa Italiana includes European companies in its listings, introducing additional noise into the volatility and movements of the stock index.
+
+The exercise primarily focused on the FTSE MIB index and spreads, specifically differences in interest rates among bonds with different maturities. While these spreads convey valuable information about general sentiments toward the future economy, it's essential to acknowledge thes above mentioned limitations as well as the necessity of using more advanced
+econometric tools would be essential to get more robust results.
+
+\newpage
+
+**References**
+
+- Goncalo Faria and Fabio Verona. "The yield curve and the stock market: Mind the long run" Journal of Financial Markets, V. 5 (2020): 1-7.
+- Fama, E.F., French, K.R. "Business conditions and expected returns on stocks and bonds". J. Financ. Econ., 25 (1), (1989): 23–49.
+- Yellen, J.L. 2017. "Chair Yellen’s Press Conference." In Transcript of Chair Yellen’s Press Conference on December 13, 2017.
+
+\newpage
+
+**Data**
+
+Bloomberg L.P. (2023). FTSE MIB data, 2013 - 2023. Bloomberg L.P. 
+Bloomberg L.P. (2023). EUR003M Index data, 2013 - 2023. Bloomberg L.P. 
+Bloomberg L.P. (2023). BTPs, Italy, 1991 - 2023. Bloomberg L.P. 
+Bloomberg L.P. (2023). CTZs, Italy, 1997 - 2023. Bloomberg L.P. 
+
+**Appendix**
+
+As an illustration, if I performed the same exercise with the term spread,
+my results would be the following:
+
+
+```{r, results='asis'}
+
+dat$tms %>% plot.ts()
+
+Acf(dat$tms, main = "Term Spread: Afc test")
+Pacf(dat$tms, main = " Term Spread: Pacf test")
+auto.arima(dat$tms)
+forecast(dat$tms) %>% plot
+Arima(dat$tms, order = c(1, 1, 0)) %>% forecast(h = 12) %>% plot()
+```
+
+
+
+
+
+
+
+
+
